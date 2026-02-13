@@ -160,9 +160,9 @@ function drawFlower(f, t) {
   const sway = Math.sin(t * 0.6 + f.swayOff) * 2;
 
   // ── FIELD AURA — drawn as many layered concentric discs ──
-  const aR = f.r * (3 + fresh * 3);
-  const auraAlpha = 0.003 + fresh * 0.006;
-  const layers = 60;
+  const aR = f.r * (1.5 + fresh * 2);
+  const auraAlpha = 0.002 + fresh * 0.004;
+  const layers = 50;
   for (let i = layers; i >= 0; i--) {
     const r = f.r * 0.2 + (aR - f.r * 0.2) * (i / layers);
     ctx.beginPath();
