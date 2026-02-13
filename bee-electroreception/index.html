@@ -342,7 +342,7 @@ function makeBee() {
     wa: a, sf: rand(0.85, 1.15),
     seed: rand(0, 1000),
     state: 'wander', target: null,
-    timer: 0, cd: 0,
+    timer: 0, cd: 0, wanderT: 0,
     trail: [],
     sense: 0,
     wingT: rand(0, 100),
@@ -359,6 +359,7 @@ function updateBee(b, dt, t) {
 
   switch (b.state) {
     case 'wander': {
+      b.wanderT += dt;
       b.wa += (noise(t*2 + b.seed) - 0.5) * 5 * dt;
       // Prevent tight circles: pull wander angle back toward velocity
       const velAngle = Math.atan2(b.vy, b.vx);
@@ -366,6 +367,23 @@ function updateBee(b, dt, t) {
       while (drift > Math.PI) drift -= Math.PI * 2;
       while (drift < -Math.PI) drift += Math.PI * 2;
       if (Math.abs(drift) > 0.8) b.wa -= drift * 2 * dt;
+
+      // If wandering too long, steer toward nearest charged flower
+      if (b.wanderT > 3) {
+        let nearF = null, nearD = Infinity;
+        for (const f of flowers) {
+          const d = hypot(b.x, b.y, f.x, f.y);
+          if (f.charge < -0.3 && d < nearD) { nearF = f; nearD = d; }
+        }
+        if (nearF) {
+          const toF = Math.atan2(nearF.y - b.y, nearF.x - b.x);
+          let pull = toF - b.wa;
+          while (pull > Math.PI) pull -= Math.PI * 2;
+          while (pull < -Math.PI) pull += Math.PI * 2;
+          b.wa += pull * 1.5 * dt;
+        }
+      }
+
       const tx = Math.cos(b.wa) * spd * 0.5;
       const ty = Math.sin(b.wa) * spd * 0.5;
       b.vx += (tx - b.vx) * 4 * dt;
@@ -382,7 +400,7 @@ function updateBee(b, dt, t) {
             }
           }
         }
-        if (best) { b.target = best; b.state = 'approach'; }
+        if (best) { b.target = best; b.state = 'approach'; b.wanderT = 0; }
       }
       break;
     }
@@ -411,7 +429,7 @@ function updateBee(b, dt, t) {
       b.wa += (Math.random()-0.5)*2*dt;
       const tx=Math.cos(b.wa)*spd*0.55, ty=Math.sin(b.wa)*spd*0.55;
       b.vx += (tx-b.vx)*3*dt; b.vy += (ty-b.vy)*3*dt;
-      if (b.timer <= 0) { b.state='wander'; b.cd=1.5; }
+      if (b.timer <= 0) { b.state='wander'; b.cd=1.5; b.wanderT=0; }
       break;
     }
   }
