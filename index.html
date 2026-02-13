@@ -218,6 +218,18 @@
       const fresh = f.charge;
       const col = lerp3(COL.spent, COL.charged, fresh);
 
+      // Soft aura glow (multi-stop to avoid banding)
+      const aR = 24 + fresh * 16;
+      const ga = ctx.createRadialGradient(f.x, f.y, 2, f.x, f.y, aR);
+      const peak = .06 + fresh * .12;
+      for (let s = 0; s <= 10; s++) {
+        const p = s / 10;
+        const a = peak * Math.pow(1 - p, 1.8) + (Math.sin(s * 73.7) * .5 + .5) * .008;
+        ga.addColorStop(p, rgb(col, Math.max(a, 0)));
+      }
+      ctx.fillStyle = ga;
+      ctx.beginPath(); ctx.arc(f.x, f.y, aR, 0, Math.PI * 2); ctx.fill();
+
       // Charge rings
       for (const ring of f.rings) {
         ring.r += 18 * (1/60);

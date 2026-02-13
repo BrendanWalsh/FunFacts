@@ -161,12 +161,17 @@ function drawFlower(f, t) {
 
   // ── FIELD AURA — the primary visual element ──
   // Large, visible, pulsing. This IS the flower's identity.
+  // Many color stops with slight noise to prevent 8-bit banding.
   const aR = f.r * (3 + fresh * 3);
   const g = ctx.createRadialGradient(f.x, f.y, f.r * 0.2, f.x, f.y, aR);
   const auraAlpha = 0.08 + fresh * 0.18;
-  g.addColorStop(0, rgb(col, auraAlpha));
-  g.addColorStop(0.4, rgb(col, auraAlpha * 0.4));
-  g.addColorStop(1, rgb(col, 0));
+  const steps = 16;
+  for (let s = 0; s <= steps; s++) {
+    const p = s / steps;
+    const baseA = auraAlpha * Math.pow(1 - p, 1.8);
+    const jitter = (Math.sin(s * 73.7 + f.ringOff * 11.3) * 0.5 + 0.5) * 0.012;
+    g.addColorStop(Math.min(p, 1), rgb(col, Math.max(baseA + jitter, 0)));
+  }
   ctx.fillStyle = g;
   ctx.beginPath();
   ctx.arc(f.x, f.y, aR, 0, Math.PI * 2);
