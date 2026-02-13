@@ -359,6 +359,12 @@ function updateBee(b, dt, t) {
   switch (b.state) {
     case 'wander': {
       b.wa += (noise(t*2 + b.sf*70) - 0.5) * 5 * dt;
+      // Prevent tight circles: pull wander angle back toward velocity
+      const velAngle = Math.atan2(b.vy, b.vx);
+      let drift = b.wa - velAngle;
+      while (drift > Math.PI) drift -= Math.PI * 2;
+      while (drift < -Math.PI) drift += Math.PI * 2;
+      if (Math.abs(drift) > 0.8) b.wa -= drift * 2 * dt;
       const tx = Math.cos(b.wa) * spd * 0.5;
       const ty = Math.sin(b.wa) * spd * 0.5;
       b.vx += (tx - b.vx) * 4 * dt;
