@@ -584,11 +584,11 @@ function drawMagnifiedBee(b, t) {
   for (const f of flowers) {
     const dx = f.x - b.x, dy = f.y - b.y;
     const d = Math.hypot(dx, dy);
-    if (d < 200 && d > 1) {
-      const pull = (-f.charge) / (d * d + 20);
+    if (d < 300 && d > 1) {
+      const pull = (-f.charge) * 50 / (d * d + 20);
       fx += (dx / d) * pull;
       fy += (dy / d) * pull;
-      fieldStrength += (-f.charge) / (d + 6);
+      fieldStrength += (-f.charge) * 50 / (d + 6);
     }
   }
   const fAngle = Math.atan2(fy, fx);
@@ -701,11 +701,11 @@ function drawMagnifiedBee(b, t) {
     let deflection = 0;
     if (fMag > 0.005) {
       const alignment = Math.cos(fieldAngleLocal - restAngle);
-      deflection = fMag * alignment * 1.4;
+      deflection = fMag * alignment * 3.5;
     }
 
     const hairAngle = restAngle + deflection;
-    const hairLen = 14 + Math.sin(i * 5.7 + t * 0.8) * 2;
+    const hairLen = 18 + Math.sin(i * 5.7 + t * 0.8) * 2;
 
     // Control point for curve: base bends first, tip follows
     const ctrlAngle = restAngle + deflection * 1.6;
@@ -780,6 +780,7 @@ addEventListener('resize', () => { resize(); initMotes(); initBees(); });
 // ── Main loop ──
 
 let prevTime = performance.now() / 1000;
+let trackedBee = null;
 
 function frame() {
   const now = performance.now() / 1000;
@@ -804,8 +805,16 @@ function frame() {
   // Labels
   drawLabels(now);
 
-  // Magnified bee view
-  drawMagnifiedBee(bees[0], now);
+  // Magnified bee view — track bee with strongest field sense
+  let tracked = trackedBee || bees[0];
+  let maxSense = 0;
+  for (const b of bees) { if (b.sense > maxSense) { maxSense = b.sense; } }
+  // Switch only when another bee senses much more than current
+  if (tracked.sense < 0.01 && maxSense > 0.04) {
+    for (const b of bees) { if (b.sense === maxSense) { tracked = b; break; } }
+  }
+  trackedBee = tracked;
+  drawMagnifiedBee(tracked, now);
 
   requestAnimationFrame(frame);
 }
