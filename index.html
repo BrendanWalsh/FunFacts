@@ -200,6 +200,7 @@
         vx: rand(-1, 1), vy: rand(-1, 1),
         phase: rand(0, 100),
         wingT: rand(0, 10),
+        target: null, targetTimer: 0,
       });
     }
   }
@@ -254,25 +255,50 @@
       b.phase += 1/60;
       b.wingT += 12 * (1/60);
 
-      // Wander with noise
-      const a = (Math.sin(b.phase * .7) + Math.cos(b.phase * 1.1 + 3)) * Math.PI;
-      const speed = 50;
-      b.vx += (Math.cos(a) * speed - b.vx) * .02;
-      b.vy += (Math.sin(a) * speed - b.vy) * .02;
+      // Find nearest charged flower to steer toward
+      if (!b.target || b.targetTimer <= 0) {
+        let best = null, bestD = Infinity;
+        for (const f of flowers) {
+          if (f.charge < .3) continue;
+          const d = Math.hypot(b.x - f.x, b.y - f.y);
+          if (d < bestD) { bestD = d; best = f; }
+        }
+        b.target = best;
+        b.targetTimer = rand(2, 5);
+      }
+      b.targetTimer -= 1/60;
+
+      let tx, ty;
+      if (b.target) {
+        tx = b.target.x; ty = b.target.y;
+      } else {
+        // Wander if no charged flower available
+        const a = (Math.sin(b.phase * .7) + Math.cos(b.phase * 1.1 + 3)) * Math.PI;
+        tx = b.x + Math.cos(a) * 80;
+        ty = b.y + Math.sin(a) * 80;
+      }
+
+      const dx = tx - b.x, dy = ty - b.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const speed = 65;
+      b.vx += (dx / dist * speed - b.vx) * .04;
+      b.vy += (dy / dist * speed - b.vy) * .04;
 
       b.x += b.vx * (1/60);
       b.y += b.vy * (1/60);
 
-      // Wrap
-      if (b.x < -10) b.x = W + 10;
-      if (b.x > W + 10) b.x = -10;
-      if (b.y < -10) b.y = H + 10;
-      if (b.y > H + 10) b.y = -10;
+      // Soft boundary
+      if (b.x < 10) b.vx += 2; if (b.x > W - 10) b.vx -= 2;
+      if (b.y < 10) b.vy += 2; if (b.y > H - 10) b.vy -= 2;
+      b.x = clamp(b.x, 0, W); b.y = clamp(b.y, 0, H);
 
-      // Discharge nearby flowers
+      // Discharge nearby flowers — strong drain on contact
       for (const f of flowers) {
         const d = Math.hypot(b.x - f.x, b.y - f.y);
-        if (d < 20 && f.charge > .1) f.charge -= .008;
+        if (d < 22 && f.charge > .05) {
+          f.charge -= .06;
+          if (f.charge < .05) { f.charge = .05; b.target = null; b.targetTimer = 0; }
+        }
       }
 
       // Draw bee
@@ -305,7 +331,7 @@
 
     // Recharge flowers slowly
     for (const f of flowers) {
-      f.charge = clamp(f.charge + .003 * (1/60), 0, 1);
+      f.charge = clamp(f.charge + .015 * (1/60), 0, 1);
     }
 
     requestAnimationFrame(draw);
