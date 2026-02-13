@@ -151,7 +151,7 @@
   let W, H;
 
   function resize() {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const dpr = devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     W = rect.width; H = rect.height;
     canvas.width = W * dpr; canvas.height = H * dpr;
