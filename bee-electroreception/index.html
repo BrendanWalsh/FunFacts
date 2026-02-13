@@ -340,10 +340,11 @@ function makeBee() {
     x: rand(100, W-100), y: rand(80, H-120),
     vx: Math.cos(a)*60, vy: Math.sin(a)*60,
     wa: a, sf: rand(0.85, 1.15),
+    seed: rand(0, 1000),
     state: 'wander', target: null,
     timer: 0, cd: 0,
     trail: [],
-    sense: 0, // field sensing intensity
+    sense: 0,
     wingT: rand(0, 100),
   };
 }
@@ -358,7 +359,7 @@ function updateBee(b, dt, t) {
 
   switch (b.state) {
     case 'wander': {
-      b.wa += (noise(t*2 + b.sf*70) - 0.5) * 5 * dt;
+      b.wa += (noise(t*2 + b.seed) - 0.5) * 5 * dt;
       // Prevent tight circles: pull wander angle back toward velocity
       const velAngle = Math.atan2(b.vy, b.vx);
       let drift = b.wa - velAngle;
@@ -423,6 +424,18 @@ function updateBee(b, dt, t) {
   if (b.y<s) b.wa += 0.03;
   if (b.y>H-s) b.wa -= 0.03;
   b.x = clamp(b.x, m, W-m); b.y = clamp(b.y, m, H-m);
+
+  // Soft repulsion from other bees
+  for (const other of bees) {
+    if (other === b) continue;
+    const dx = b.x - other.x, dy = b.y - other.y;
+    const d = Math.hypot(dx, dy);
+    if (d < 55 && d > 1) {
+      const push = (55 - d) * 0.8;
+      b.vx += (dx / d) * push * dt;
+      b.vy += (dy / d) * push * dt;
+    }
+  }
 
   // Field sensing
   let field = 0;
