@@ -3,609 +3,329 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How Bees Read Electricity</title>
+<title>Fun Facts</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #0e1610; display: flex; }
-  canvas { flex: 1; min-width: 0; height: 100%; }
-  #panel {
-    width: 300px; flex-shrink: 0; height: 100%;
-    background: #0e1610; border-left: 1px solid rgba(100, 160, 130, .1);
-    padding: 28px 24px 24px; overflow-y: auto;
-    color: rgba(190, 210, 195, .8); font: 12.5px/1.65 'Segoe UI', system-ui, sans-serif;
+  html, body {
+    width: 100%; min-height: 100vh;
+    background: #0c0f12;
+    color: #e0e4e8;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   }
-  #panel::-webkit-scrollbar { width: 4px; }
-  #panel::-webkit-scrollbar-thumb { background: rgba(100,160,130,.2); border-radius: 2px; }
-  #panel h1 {
-    font: 600 16px/1.3 'Segoe UI', system-ui, sans-serif;
-    color: rgba(220, 240, 220, .9); margin-bottom: 12px;
+
+  header {
+    text-align: center;
+    padding: 72px 24px 16px;
   }
-  #panel h2 {
-    font: 600 11px/1.3 'Segoe UI', system-ui, sans-serif;
-    color: rgba(100, 180, 255, .75); margin: 14px 0 4px;
-    text-transform: uppercase; letter-spacing: .8px;
+  header h1 {
+    font-size: 42px; font-weight: 700;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #b0c4ff 0%, #f0d0ff 50%, #ffd0b0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  #panel p { margin-bottom: 8px; }
-  #panel .dim { color: rgba(150, 170, 160, .5); font-size: 10.5px; line-height: 1.5; }
-  #panel .key {
-    display: flex; align-items: center; gap: 8px;
-    margin: 5px 0; font-size: 11.5px;
+  header p {
+    margin-top: 12px;
+    color: rgba(180, 190, 210, .55);
+    font-size: 15px; font-weight: 400;
+    max-width: 420px; margin-left: auto; margin-right: auto;
   }
-  #panel .key .swatch {
-    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 28px;
+    max-width: 1100px;
+    margin: 48px auto 80px;
+    padding: 0 32px;
+  }
+
+  .card {
+    position: relative;
+    background: #14181e;
+    border: 1px solid rgba(120, 140, 180, .08);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    text-decoration: none; color: inherit; display: block;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, .35), 0 0 0 1px rgba(100, 160, 255, .12);
+    border-color: rgba(100, 160, 255, .15);
+  }
+  .card:hover .card-preview { opacity: 1; }
+  .card:hover .card-tag { background: rgba(100, 160, 255, .15); color: rgba(160, 200, 255, .9); }
+
+  .card-preview {
+    position: relative; width: 100%; height: 220px;
+    opacity: .85; transition: opacity .3s ease;
+  }
+  .card-preview canvas {
+    width: 100%; height: 100%; display: block;
+  }
+
+  .card-body {
+    padding: 20px 22px 22px;
+  }
+  .card-tag {
+    display: inline-block;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    padding: 4px 10px; border-radius: 6px;
+    background: rgba(120, 140, 180, .08);
+    color: rgba(150, 170, 200, .6);
+    margin-bottom: 10px;
+    transition: background .2s, color .2s;
+  }
+  .card h2 {
+    font-size: 20px; font-weight: 600;
+    line-height: 1.3; margin-bottom: 8px;
+    color: rgba(230, 240, 255, .92);
+  }
+  .card p {
+    font-size: 13.5px; line-height: 1.6;
+    color: rgba(170, 185, 205, .65);
+  }
+  .card .arrow {
+    position: absolute; bottom: 20px; right: 22px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(100, 160, 255, .08);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+  }
+  .card:hover .arrow { background: rgba(100, 160, 255, .18); }
+  .card .arrow svg { width: 14px; height: 14px; stroke: rgba(160, 200, 255, .6); fill: none; stroke-width: 2; }
+
+  .coming-soon {
+    position: relative;
+    background: #14181e;
+    border: 1px dashed rgba(120, 140, 180, .1);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 320px;
+    color: rgba(120, 140, 180, .25);
+    font-size: 14px; font-weight: 500;
+    letter-spacing: .5px;
   }
 </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
-<div id="panel">
-  <h1>How Bees Read Electricity</h1>
-  <p>Bumblebees build up a positive electric charge as they fly, the same static effect as rubbing a balloon on your hair. Flowers carry a slight negative charge from the atmosphere.</p>
-  <p>When a bee lands on a flower, the two exchange charge. The flower's electric signature stays altered for about <strong>100 seconds</strong>, effectively hanging a "just visited" sign that other bees can detect and skip.</p>
 
-  <h2>The Discovery</h2>
-  <p>In 2013, researchers at the University of Bristol showed that bees can learn to read these electric fields to tell rewarding flowers from duds, even with all visual and scent cues removed.</p>
+<header>
+  <h1>Fun Facts</h1>
+  <p>Interactive explorations of surprising science. Each one is a rabbit hole worth falling into.</p>
+</header>
 
-  <h2>The Sensor</h2>
-  <p>A 2016 follow-up found the mechanism: fine body hairs that physically bend in response to electric gradients as weak as a few volts per meter. This was the first dry electroreception system found in a land animal. Before this, electroreception was only known in aquatic species like sharks and rays.</p>
+<div class="gallery">
 
-  <h2>The Result</h2>
-  <p>Flowers broadcast their status on a channel humans had no idea existed. A bee approaching a recently visited flower senses the weakened field, veers away, and saves the trip.</p>
+  <a class="card" href="bee-electroreception/">
+    <div class="card-preview">
+      <canvas id="bee-preview"></canvas>
+    </div>
+    <div class="card-body">
+      <span class="card-tag">Biology / Physics</span>
+      <h2>How Bees Read Electricity</h2>
+      <p>Bumblebees sense the electric fields around flowers to figure out which ones have already been visited. The mechanism was only discovered in 2013.</p>
+      <span class="arrow"><svg viewBox="0 0 14 14"><path d="M1 7h11M8 3l4 4-4 4"/></svg></span>
+    </div>
+  </a>
 
-  <h2>What You Are Seeing</h2>
-  <div class="key"><span class="swatch" style="background:rgba(60,160,255,.8);box-shadow:0 0 6px rgba(60,160,255,.5)"></span> Charged flower (fresh)</div>
-  <div class="key"><span class="swatch" style="background:rgba(120,60,100,.8);box-shadow:0 0 6px rgba(120,60,100,.5)"></span> Depleted flower (visited)</div>
-  <div class="key"><span class="swatch" style="background:rgba(255,195,70,.9);box-shadow:0 0 6px rgba(255,195,70,.5)"></span> Bee (positive charge)</div>
-  <div class="key"><span class="swatch" style="background:rgba(100,180,255,.5);box-shadow:0 0 4px rgba(100,180,255,.3)"></span> Field particles (deflect toward bees)</div>
-  <div class="key"><span class="swatch" style="border:1.5px dashed rgba(255,195,70,.5);background:transparent"></span> Sensor halo (hair deflection)</div>
+  <div class="coming-soon">More coming soon</div>
 
-  <p class="dim" style="margin-top:18px">Clarke et al., Science 340, 2013. Sutton et al., PNAS 113, 2016. University of Bristol.</p>
 </div>
+
 <script>
+/* ── Mini bee preview animation ─────────────────────────
+   A simplified version of the full visualization:
+   just flowers, charge rings, motes, and bees wandering.
+   Enough to give a taste of the interactive experience. */
 
-/* ═══════════════════════════════════════════════════════
-   Bee Electroreception — v3
-   Design principle: the electric field is the visual
-   star. Flowers are nodes. Color = charge state.
-   Everything serves the science.
-   ═══════════════════════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('bee-preview');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H;
 
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-let W, H;
-
-function resize() {
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  const rect = canvas.getBoundingClientRect();
-  W = rect.width; H = rect.height;
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  placeFlowers();
-}
-
-// ── Utilities ──
-
-function rand(a, b) { return a + Math.random() * (b - a); }
-function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
-function hypot(ax, ay, bx, by) { return Math.hypot(ax - bx, ay - by); }
-function lerp3(a, b, t) { return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; }
-function rgb(c, a) { return `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`; }
-
-const N_TBL = Float32Array.from({length:256}, ()=>Math.random());
-function noise(x) {
-  const i = ((x|0)%256+256)%256, f = x-Math.floor(x), t = f*f*(3-2*f);
-  return N_TBL[i]*(1-t) + N_TBL[(i+1)%256]*t;
-}
-
-// ── Palette ──
-// Warm dusk garden — not midnight, not noon. Golden hour fading to teal.
-
-const COL = {
-  skyTop:   [28, 35, 50],
-  skyMid:   [22, 38, 35],
-  skyBot:   [18, 30, 22],
-  // Charge state colors (THE key palette — color IS meaning)
-  charged:  [60, 160, 255],   // strong blue = full negative charge
-  spent:    [120, 60, 100],    // muted plum = discharged
-  beeCore:  [255, 240, 180],
-  beeGlow:  [255, 195, 70],
-  beeTrail: [255, 180, 60],
-};
-
-// ── Background ──
-
-function drawSky() {
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, rgb(COL.skyTop, 1));
-  g.addColorStop(0.6, rgb(COL.skyMid, 1));
-  g.addColorStop(1, rgb(COL.skyBot, 1));
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
-}
-
-// ── Flowers ──
-// Flowers are NODES. Their visual identity IS their charge state.
-// No random decorative colors. Blue = fresh. Purple = spent.
-
-const RECOVERY = 14; // seconds (compressed from real ~100s)
-let flowers = [];
-
-function placeFlowers() {
-  flowers = [];
-  const count = Math.max(10, Math.round(W * H / 100000));
-  const minGap = 120, margin = 80;
-  for (let a = 0; a < 600 && flowers.length < count; a++) {
-    const x = margin + Math.random() * (W - margin*2);
-    const y = margin * 0.8 + Math.random() * (H - margin * 1.6);
-    let ok = true;
-    for (const f of flowers) if (hypot(f.x, f.y, x, y) < minGap) { ok = false; break; }
-    if (!ok) continue;
-    flowers.push({
-      x, y,
-      r: rand(16, 24),         // core radius
-      nPetals: Math.floor(rand(5, 8)),
-      petalRot: rand(0, Math.PI*2),
-      swayOff: rand(0, Math.PI*2),
-      charge: -1,              // -1 = fresh, 0 = spent
-      visitT: -999,
-      ringOff: rand(0, 100),
-    });
-  }
-}
-
-function flowerFreshness(f, t) {
-  return clamp((t - f.visitT) / RECOVERY, 0, 1);
-}
-
-function drawFlower(f, t) {
-  const fresh = flowerFreshness(f, t);
-  f.charge = -fresh;
-  const col = lerp3(COL.spent, COL.charged, fresh);
-  const sway = Math.sin(t * 0.6 + f.swayOff) * 2;
-
-  // ── FIELD AURA — the primary visual element ──
-  // Large, visible, pulsing. This IS the flower's identity.
-  const aR = f.r * (3 + fresh * 3);
-  const g = ctx.createRadialGradient(f.x, f.y, f.r * 0.2, f.x, f.y, aR);
-  const auraAlpha = 0.08 + fresh * 0.18;
-  g.addColorStop(0, rgb(col, auraAlpha));
-  g.addColorStop(0.4, rgb(col, auraAlpha * 0.4));
-  g.addColorStop(1, rgb(col, 0));
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(f.x, f.y, aR, 0, Math.PI * 2);
-  ctx.fill();
-
-  // ── CHARGE RINGS — sonar-like pulses showing field activity ──
-  // Bright enough to actually see. This is the key differentiator.
-  if (fresh > 0.1) {
-    for (let i = 0; i < 3; i++) {
-      const phase = ((t * 0.4 + f.ringOff + i * 0.33) % 1);
-      const ringR = f.r * (1.2 + phase * 4.5);
-      const ringA = (1 - phase) * 0.15 * fresh;
-      ctx.strokeStyle = rgb(col, ringA);
-      ctx.lineWidth = 1.8 * (1 - phase * 0.6);
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, ringR, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const rect = canvas.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    placeFlowers();
   }
 
-  // ── Stem — simple, functional ──
-  ctx.strokeStyle = rgb([45, 90, 50], 0.35 + fresh * 0.2);
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(f.x, f.y + f.r * 0.5);
-  ctx.quadraticCurveTo(f.x + sway, f.y + f.r * 1.5, f.x + sway * 0.6, f.y + f.r * 2.8);
-  ctx.stroke();
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+  function lerp3(a, b, t) { return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t]; }
+  function rgb(c, a) { return `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`; }
 
-  // ── Petals — drawn as soft glowing lobes, color = charge ──
-  const pr = f.r;
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < f.nPetals; i++) {
-    const a = f.petalRot + (i / f.nPetals) * Math.PI * 2;
-    const wobble = Math.sin(t * 0.4 + f.swayOff + i * 1.5) * 0.03;
-    ctx.save();
-    ctx.translate(f.x, f.y);
-    ctx.rotate(a + wobble);
-    // Petal as a soft gradient blob, not a hard ellipse
-    const pg = ctx.createRadialGradient(pr * 0.5, 0, 0, pr * 0.5, 0, pr * 0.5);
-    pg.addColorStop(0, rgb(col, 0.2 + fresh * 0.35));
-    pg.addColorStop(0.6, rgb(col, 0.05 + fresh * 0.1));
-    pg.addColorStop(1, rgb(col, 0));
-    ctx.fillStyle = pg;
-    ctx.beginPath();
-    ctx.ellipse(pr * 0.5, 0, pr * 0.5, pr * 0.22, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-  ctx.restore();
-
-  // ── Center — bright point, whiter when charged ──
-  const cg = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 0.3);
-  const centerWhite = 0.4 + fresh * 0.5;
-  cg.addColorStop(0, rgb([255, 255, 240], centerWhite));
-  cg.addColorStop(0.5, rgb(col, centerWhite * 0.6));
-  cg.addColorStop(1, rgb(col, 0));
-  ctx.fillStyle = cg;
-  ctx.beginPath();
-  ctx.arc(f.x, f.y, f.r * 0.3, 0, Math.PI * 2);
-  ctx.fill();
-
-  // ── Visit flash (charge transfer burst) ──
-  const visitAge = t - f.visitT;
-  if (visitAge < 0.6) {
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const fl = 1 - visitAge / 0.6;
-    const burstR = f.r * (2 + visitAge * 10);
-    const fg = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, burstR);
-    fg.addColorStop(0, rgb([255, 255, 230], 0.5 * fl));
-    fg.addColorStop(0.15, rgb(COL.charged, 0.3 * fl));
-    fg.addColorStop(1, rgb(COL.charged, 0));
-    ctx.fillStyle = fg;
-    ctx.beginPath();
-    ctx.arc(f.x, f.y, burstR, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-}
-
-// ── Field motes ──
-// More per flower, more visible. They're the field made tangible.
-
-let motes = [];
-const MOTES_PER_FLOWER = 12;
-
-function spawnMote(f) {
-  const a = rand(0, Math.PI*2), r = f.r * rand(0.2, 1);
-  return { x: f.x+Math.cos(a)*r, y: f.y+Math.sin(a)*r, vx:0, vy:0, age:0, life: rand(2,5), src: f };
-}
-
-function initMotes() {
-  motes = [];
-  for (const f of flowers)
-    for (let i = 0; i < MOTES_PER_FLOWER; i++) motes.push(spawnMote(f));
-}
-
-function updateAndDrawMotes(t, dt) {
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  for (let i = motes.length - 1; i >= 0; i--) {
-    const m = motes[i];
-    m.age += dt;
-    if (m.age > m.life) { motes[i] = spawnMote(m.src); continue; }
-
-    const f = m.src;
-    const fresh = flowerFreshness(f, t);
-
-    // Repel from source flower
-    const fdx = m.x - f.x, fdy = m.y - f.y;
-    const fd = Math.hypot(fdx, fdy) + 4;
-    const fStr = fresh * 1800 / (fd * fd);
-    m.vx += (fdx / fd) * fStr * dt;
-    m.vy += (fdy / fd) * fStr * dt;
-
-    // Attract toward nearby bees
-    for (const b of bees) {
-      const bdx = b.x - m.x, bdy = b.y - m.y;
-      const bd2 = bdx*bdx + bdy*bdy + 300;
-      if (bd2 < 20000) {
-        const bStr = 800 / bd2;
-        const bd = Math.sqrt(bd2);
-        m.vx += (bdx/bd) * bStr * dt;
-        m.vy += (bdy/bd) * bStr * dt;
-      }
-    }
-
-    m.vx *= 0.93; m.vy *= 0.93;
-    const spd = Math.hypot(m.vx, m.vy);
-    if (spd > 100) { m.vx *= 100/spd; m.vy *= 100/spd; }
-    m.x += m.vx * dt; m.y += m.vy * dt;
-
-    // Respawn if off-screen
-    if (m.x < -40 || m.x > W+40 || m.y < -40 || m.y > H+40) { motes[i] = spawnMote(m.src); continue; }
-
-    // Draw — brighter, larger than before
-    const lifeA = Math.min(m.age*3, 1) * clamp(1 - m.age/m.life, 0, 1);
-    const distFade = clamp(1 - hypot(m.x, m.y, f.x, f.y) / 160, 0.08, 1);
-    const alpha = lifeA * distFade * (0.25 + fresh * 0.5);
-    const col = lerp3(COL.spent, COL.charged, fresh);
-
-    const sz = 1.5 + spd * 0.02;
-    // Glow dot instead of flat circle
-    const mg = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, sz * 2.5);
-    mg.addColorStop(0, rgb(col, alpha));
-    mg.addColorStop(1, rgb(col, 0));
-    ctx.fillStyle = mg;
-    ctx.beginPath();
-    ctx.arc(m.x, m.y, sz * 2.5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-// ── Bees ──
-// Small warm bodies with direction. Not just dots.
-// Elongated shape so you can see which way they're headed.
-
-let bees = [];
-const BEE_COUNT = 6;
-
-function makeBee() {
-  const a = rand(0, Math.PI*2);
-  return {
-    x: rand(100, W-100), y: rand(80, H-120),
-    vx: Math.cos(a)*60, vy: Math.sin(a)*60,
-    wa: a, sf: rand(0.85, 1.15),
-    state: 'wander', target: null,
-    timer: 0, cd: 0,
-    trail: [],
-    sense: 0, // field sensing intensity
-    wingT: rand(0, 100),
+  const COL = {
+    skyTop: [20, 28, 42], skyMid: [16, 32, 30], skyBot: [14, 24, 18],
+    charged: [60, 160, 255], spent: [120, 60, 100],
+    beeCore: [255, 240, 180], beeGlow: [255, 195, 70],
   };
-}
 
-function initBees() { bees = []; for (let i = 0; i < BEE_COUNT; i++) bees.push(makeBee()); }
+  // ── Flowers ──
+  const flowers = [];
+  function placeFlowers() {
+    flowers.length = 0;
+    const cols = Math.max(3, Math.floor(W / 90));
+    const rows = Math.max(2, Math.floor(H / 90));
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cx = (c + .5) * (W / cols) + rand(-18, 18);
+        const cy = (r + .5) * (H / rows) + rand(-18, 18);
+        flowers.push({
+          x: cx, y: cy,
+          charge: rand(.5, 1),
+          motes: Array.from({length: 6}, () => ({
+            a: rand(0, Math.PI * 2), r: rand(8, 28), s: rand(.3, .8),
+          })),
+          rings: [{ r: 0, a: .12 }, { r: 0, a: .08 }],
+        });
+      }
+    }
+  }
 
-function updateBee(b, dt, t) {
-  const spd = 260 * b.sf;
-  b.cd = Math.max(0, b.cd - dt);
-  b.trail.push({x: b.x, y: b.y});
-  if (b.trail.length > 25) b.trail.shift();
+  // ── Bees ──
+  const bees = [];
+  function initBees() {
+    bees.length = 0;
+    for (let i = 0; i < 5; i++) {
+      bees.push({
+        x: rand(30, W - 30), y: rand(30, H - 30),
+        vx: rand(-1, 1), vy: rand(-1, 1),
+        phase: rand(0, 100),
+        wingT: rand(0, 10),
+      });
+    }
+  }
 
-  switch (b.state) {
-    case 'wander': {
-      b.wa += (noise(t*2 + b.sf*70) - 0.5) * 5 * dt;
-      const tx = Math.cos(b.wa) * spd * 0.5;
-      const ty = Math.sin(b.wa) * spd * 0.5;
-      b.vx += (tx - b.vx) * 4 * dt;
-      b.vy += (ty - b.vy) * 4 * dt;
-      if (b.cd <= 0) {
-        let best = null, bestD = Infinity;
-        for (const f of flowers) {
-          const d = hypot(b.x, b.y, f.x, f.y);
-          if (d < 180 && d < bestD) {
-            if (f.charge < -0.35) { best = f; bestD = d; }
-            else if (d < 65) {
-              b.cd = 1.2;
-              b.wa = Math.atan2(b.y-f.y, b.x-f.x) + rand(-0.3, 0.3);
-            }
-          }
+  // ── Draw ──
+  let t = 0;
+  function draw() {
+    t += 1/60;
+    ctx.clearRect(0, 0, W, H);
+
+    // Sky gradient
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, rgb(COL.skyTop, 1));
+    g.addColorStop(.5, rgb(COL.skyMid, 1));
+    g.addColorStop(1, rgb(COL.skyBot, 1));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    // Flowers
+    for (const f of flowers) {
+      const fresh = f.charge;
+      const col = lerp3(COL.spent, COL.charged, fresh);
+
+      // Charge rings
+      for (const ring of f.rings) {
+        ring.r += 18 * (1/60);
+        if (ring.r > 32) ring.r = 0;
+        const ra = ring.a * fresh * (1 - ring.r / 32);
+        if (ra > .005) {
+          ctx.beginPath(); ctx.arc(f.x, f.y, ring.r, 0, Math.PI * 2);
+          ctx.strokeStyle = rgb(col, ra); ctx.lineWidth = 1; ctx.stroke();
         }
-        if (best) { b.target = best; b.state = 'approach'; }
       }
-      break;
-    }
-    case 'approach': {
-      const f = b.target;
-      if (!f || f.charge > -0.2) { b.state='wander'; b.target=null; b.cd=0.8; break; }
-      const dx=f.x-b.x, dy=f.y-b.y, d=Math.hypot(dx,dy);
-      const arrive = clamp(d/45, 0, 1);
-      b.vx += ((dx/d)*spd*arrive - b.vx) * 6 * dt;
-      b.vy += ((dy/d)*spd*arrive - b.vy) * 6 * dt;
-      if (d < 10) {
-        b.state='land'; b.timer=rand(1, 1.6);
-        b.vx=0; b.vy=0; b.x=f.x; b.y=f.y;
-        f.visitT = t;
+
+      // Motes
+      for (const m of f.motes) {
+        m.a += m.s * (1/60);
+        const mx = f.x + Math.cos(m.a) * m.r;
+        const my = f.y + Math.sin(m.a) * m.r;
+        ctx.beginPath(); ctx.arc(mx, my, 1, 0, Math.PI * 2);
+        ctx.fillStyle = rgb(col, .25 * fresh);
+        ctx.fill();
       }
-      break;
+
+      // Center dot
+      ctx.beginPath(); ctx.arc(f.x, f.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = rgb(col, .6 * fresh + .15);
+      ctx.fill();
     }
-    case 'land': {
-      b.timer -= dt; b.vx*=0.05; b.vy*=0.05;
-      b.y += Math.sin(t*7) * 0.1;
-      if (b.timer <= 0) { b.state='depart'; b.timer=rand(0.5,0.8); b.wa=rand(-Math.PI,Math.PI); b.target=null; }
-      break;
-    }
-    case 'depart': {
-      b.timer -= dt;
-      b.wa += (Math.random()-0.5)*2*dt;
-      const tx=Math.cos(b.wa)*spd*0.55, ty=Math.sin(b.wa)*spd*0.55;
-      b.vx += (tx-b.vx)*3*dt; b.vy += (ty-b.vy)*3*dt;
-      if (b.timer <= 0) { b.state='wander'; b.cd=1.5; }
-      break;
-    }
-  }
 
-  b.x += b.vx*dt; b.y += b.vy*dt;
-  // Boundary
-  const m=35, s=80;
-  if (b.x<s) b.wa += (s-b.x)*0.004;
-  if (b.x>W-s) b.wa -= (b.x-(W-s))*0.004;
-  if (b.y<s) b.wa += 0.03;
-  if (b.y>H-s) b.wa -= 0.03;
-  b.x = clamp(b.x, m, W-m); b.y = clamp(b.y, m, H-m);
+    // Bees
+    for (const b of bees) {
+      b.phase += 1/60;
+      b.wingT += 12 * (1/60);
 
-  // Field sensing
-  let field = 0;
-  for (const f of flowers) {
-    const d = hypot(b.x, b.y, f.x, f.y);
-    if (d < 140) field += (-f.charge) * 50 / (d + 6);
-  }
-  b.sense += (clamp(field * 0.06, 0, 1) - b.sense) * 5 * dt;
-}
+      // Wander with noise
+      const a = (Math.sin(b.phase * .7) + Math.cos(b.phase * 1.1 + 3)) * Math.PI;
+      const speed = 50;
+      b.vx += (Math.cos(a) * speed - b.vx) * .02;
+      b.vy += (Math.sin(a) * speed - b.vy) * .02;
 
-function drawBee(b, t) {
-  const angle = Math.atan2(b.vy, b.vx);
-  const speed = Math.hypot(b.vx, b.vy);
+      b.x += b.vx * (1/60);
+      b.y += b.vy * (1/60);
 
-  // ── Trail — warm ribbon showing flight path ──
-  if (b.trail.length > 2) {
-    for (let i = 1; i < b.trail.length; i++) {
-      const frac = i / b.trail.length;
+      // Wrap
+      if (b.x < -10) b.x = W + 10;
+      if (b.x > W + 10) b.x = -10;
+      if (b.y < -10) b.y = H + 10;
+      if (b.y > H + 10) b.y = -10;
+
+      // Discharge nearby flowers
+      for (const f of flowers) {
+        const d = Math.hypot(b.x - f.x, b.y - f.y);
+        if (d < 20 && f.charge > .1) f.charge -= .008;
+      }
+
+      // Draw bee
+      const wingUp = Math.sin(b.wingT) * .5 + .5;
+      ctx.save(); ctx.translate(b.x, b.y);
+      const facing = Math.atan2(b.vy, b.vx);
+      ctx.rotate(facing);
+
+      // Glow
+      const grd = ctx.createRadialGradient(0, 0, 0, 0, 0, 10);
+      grd.addColorStop(0, rgb(COL.beeGlow, .3));
+      grd.addColorStop(1, rgb(COL.beeGlow, 0));
+      ctx.fillStyle = grd;
+      ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+
+      // Body
+      ctx.fillStyle = rgb(COL.beeCore, .9);
       ctx.beginPath();
-      ctx.moveTo(b.trail[i-1].x, b.trail[i-1].y);
-      ctx.lineTo(b.trail[i].x, b.trail[i].y);
-      ctx.strokeStyle = rgb(COL.beeTrail, frac * frac * 0.2);
-      ctx.lineWidth = frac * 2.5;
-      ctx.stroke();
+      ctx.ellipse(0, 0, 4, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Wings
+      const wo = 2.5 + wingUp * 2;
+      ctx.fillStyle = 'rgba(200,220,255,.25)';
+      ctx.beginPath(); ctx.ellipse(-1, -wo, 3, 1.5, -.3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(-1,  wo, 3, 1.5,  .3, 0, Math.PI * 2); ctx.fill();
+
+      ctx.restore();
     }
+
+    // Recharge flowers slowly
+    for (const f of flowers) {
+      f.charge = clamp(f.charge + .003 * (1/60), 0, 1);
+    }
+
+    requestAnimationFrame(draw);
   }
 
-  ctx.save();
-  ctx.translate(b.x, b.y);
-  ctx.rotate(angle);
+  // Pause animation when card is not visible
+  let running = false;
+  const observer = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting && !running) {
+      running = true;
+      resize();
+      if (bees.length === 0) initBees();
+      draw();
+    }
+  }, { threshold: 0.1 });
 
-  // ── Sensor halo — expands near charged flowers ──
-  if (b.sense > 0.05) {
-    const hr = 16 + b.sense * 22;
-    // Pulsing ring
-    ctx.strokeStyle = rgb(COL.beeGlow, b.sense * 0.3);
-    ctx.lineWidth = 0.8 + b.sense;
-    ctx.setLineDash([2, 4]);
-    ctx.beginPath();
-    ctx.arc(0, 0, hr, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  // ── Wings — two translucent shapes that beat ──
-  b.wingT += speed * 0.008 + 0.5;
-  const wingFlap = Math.sin(b.wingT) * 0.5;
-  ctx.fillStyle = 'rgba(200, 220, 255, 0.18)';
-  for (const side of [-1, 1]) {
-    ctx.save();
-    ctx.rotate(side * (0.5 + wingFlap));
-    ctx.beginPath();
-    ctx.ellipse(-1, side * 1.5, 9, 3.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // ── Body — warm elongated shape with direction ──
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  // Glow halo
-  const hg = ctx.createRadialGradient(0, 0, 0, 0, 0, 20);
-  hg.addColorStop(0, rgb(COL.beeGlow, 0.18));
-  hg.addColorStop(0.4, rgb(COL.beeGlow, 0.05));
-  hg.addColorStop(1, rgb(COL.beeGlow, 0));
-  ctx.fillStyle = hg;
-  ctx.beginPath();
-  ctx.arc(0, 0, 20, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-
-  // Solid body
-  ctx.fillStyle = rgb(COL.beeGlow, 0.85);
-  ctx.beginPath();
-  ctx.ellipse(0, 0, 7, 4, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Dark stripes
-  ctx.fillStyle = 'rgba(30, 20, 0, 0.45)';
-  ctx.fillRect(-2, -4, 2.5, 8);
-  ctx.fillRect(2.5, -4, 2.5, 8);
-
-  // Head
-  ctx.fillStyle = 'rgba(50, 35, 10, 0.8)';
-  ctx.beginPath();
-  ctx.arc(6, 0, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Hot white center
-  ctx.fillStyle = rgb(COL.beeCore, 0.6);
-  ctx.beginPath();
-  ctx.arc(0, 0, 2, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-
-  // ── Landing glow ──
-  if (b.state === 'land') {
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const pr = 8 + Math.sin(t * 10) * 3;
-    const pg = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, pr);
-    pg.addColorStop(0, rgb([255,255,210], 0.3));
-    pg.addColorStop(1, rgb(COL.beeGlow, 0));
-    ctx.fillStyle = pg;
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, pr, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-}
-
-// ── Event labels ──
-// Brief text that appears when key interactions happen.
-
-let labels = [];
-
-function addLabel(x, y, text, duration) {
-  labels.push({ x, y, text, birth: performance.now()/1000, dur: duration || 2 });
-}
-
-function drawLabels(t) {
-  ctx.textAlign = 'center';
-  ctx.font = '11px "Segoe UI", system-ui, sans-serif';
-  for (let i = labels.length - 1; i >= 0; i--) {
-    const l = labels[i];
-    const age = t - l.birth;
-    if (age > l.dur) { labels.splice(i, 1); continue; }
-    const alpha = age < 0.3 ? age / 0.3 : clamp(1 - (age - l.dur + 0.5) / 0.5, 0, 1);
-    const yOff = -12 - age * 8;
-    ctx.fillStyle = rgb([200, 220, 200], alpha * 0.5);
-    ctx.fillText(l.text, l.x, l.y + yOff);
-  }
-}
-
-// Hook labels into bee state changes
-let _origUpdate = updateBee;
-updateBee = function(b, dt, t) {
-  const prevState = b.state;
-  _origUpdate(b, dt, t);
-  if (prevState === 'approach' && b.state === 'land') {
-    addLabel(b.x, b.y - 10, '⚡ charge transfer', 1.5);
-  }
-  if (prevState === 'wander' && b.state === 'approach') {
-    addLabel(b.x, b.y - 10, 'sensing field…', 1);
-  }
-  if (prevState !== 'wander' && b.state === 'wander' && b.cd > 1) {
-    // just veered away from a spent flower
-  }
-};
-
-// ── Init ──
-
-resize();
-initBees();
-initMotes();
-addEventListener('resize', () => { resize(); initMotes(); initBees(); });
-
-// ── Main loop ──
-
-let prevTime = performance.now() / 1000;
-
-function frame() {
-  const now = performance.now() / 1000;
-  let dt = now - prevTime;
-  prevTime = now;
-  if (dt > 0.05) dt = 0.05;
-  if (dt <= 0) dt = 1/60;
-
-  // Clear
-  drawSky();
-
-  // Flowers
-  for (const f of flowers) drawFlower(f, now);
-
-  // Field motes
-  updateAndDrawMotes(now, dt);
-
-  // Bees
-  for (const b of bees) updateBee(b, dt, now);
-  for (const b of bees) drawBee(b, now);
-
-  // Labels
-  drawLabels(now);
-
-  requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
-
+  window.addEventListener('resize', () => { if (running) resize(); });
+  observer.observe(canvas);
+})();
 </script>
+
 </body>
 </html>
