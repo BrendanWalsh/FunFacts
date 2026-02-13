@@ -159,11 +159,10 @@ function drawFlower(f, t) {
   const col = lerp3(COL.spent, COL.charged, fresh);
   const sway = Math.sin(t * 0.6 + f.swayOff) * 2;
 
-  // ── FIELD AURA — drawn as layered concentric discs ──
-  // Avoids canvas radialGradient 8-bit banding entirely.
+  // ── FIELD AURA — drawn as many layered concentric discs ──
   const aR = f.r * (3 + fresh * 3);
-  const auraAlpha = 0.008 + fresh * 0.018;
-  const layers = 20;
+  const auraAlpha = 0.003 + fresh * 0.006;
+  const layers = 60;
   for (let i = layers; i >= 0; i--) {
     const r = f.r * 0.2 + (aR - f.r * 0.2) * (i / layers);
     ctx.beginPath();

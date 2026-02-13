@@ -218,11 +218,11 @@
       const fresh = f.charge;
       const col = lerp3(COL.spent, COL.charged, fresh);
 
-      // Soft aura glow (layered discs to avoid gradient banding)
+      // Soft aura glow (layered discs)
       const aR = 24 + fresh * 16;
-      const aAlpha = .006 + fresh * .012;
-      for (let i = 12; i >= 0; i--) {
-        const r = 2 + (aR - 2) * (i / 12);
+      const aAlpha = .002 + fresh * .005;
+      for (let i = 36; i >= 0; i--) {
+        const r = 2 + (aR - 2) * (i / 36);
         ctx.beginPath(); ctx.arc(f.x, f.y, r, 0, Math.PI * 2);
         ctx.fillStyle = rgb(col, aAlpha);
         ctx.fill();
