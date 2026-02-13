@@ -568,6 +568,184 @@ updateBee = function(b, dt, t) {
   }
 };
 
+// ── Magnified bee view ──
+// A circular inset that follows one bee and shows detailed body hairs
+// bending in response to the local electric field.
+
+const LENS_R = 80;
+const LENS_MARGIN = 24;
+
+function drawMagnifiedBee(b, t) {
+  const lx = LENS_MARGIN + LENS_R;
+  const ly = H - LENS_MARGIN - LENS_R;
+
+  // Find field direction from nearest charged flower
+  let fx = 0, fy = 0, fieldStrength = 0;
+  for (const f of flowers) {
+    const dx = f.x - b.x, dy = f.y - b.y;
+    const d = Math.hypot(dx, dy);
+    if (d < 180 && d > 1) {
+      const pull = (-f.charge) / (d * d + 20);
+      fx += (dx / d) * pull;
+      fy += (dy / d) * pull;
+      fieldStrength += (-f.charge) / (d + 6);
+    }
+  }
+  const fAngle = Math.atan2(fy, fx);
+  const fMag = clamp(fieldStrength * 0.15, 0, 1);
+
+  ctx.save();
+
+  // Clip to circle
+  ctx.beginPath();
+  ctx.arc(lx, ly, LENS_R, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Background — dark with slight field tint
+  const bgCol = lerp3([18, 24, 20], COL.charged, fMag * 0.15);
+  ctx.fillStyle = rgb(bgCol, 1);
+  ctx.fillRect(lx - LENS_R, ly - LENS_R, LENS_R * 2, LENS_R * 2);
+
+  // Field gradient lines (subtle background showing field direction)
+  if (fMag > 0.02) {
+    ctx.strokeStyle = rgb(COL.charged, fMag * 0.12);
+    ctx.lineWidth = 0.5;
+    for (let i = -6; i <= 6; i++) {
+      const ox = Math.cos(fAngle + Math.PI/2) * i * 12;
+      const oy = Math.sin(fAngle + Math.PI/2) * i * 12;
+      ctx.beginPath();
+      ctx.moveTo(lx + ox - Math.cos(fAngle) * LENS_R, ly + oy - Math.sin(fAngle) * LENS_R);
+      ctx.lineTo(lx + ox + Math.cos(fAngle) * LENS_R, ly + oy + Math.sin(fAngle) * LENS_R);
+      ctx.stroke();
+    }
+  }
+
+  ctx.save();
+  ctx.translate(lx, ly);
+
+  // Bee body (magnified ~6x)
+  const bAngle = Math.atan2(b.vy, b.vx);
+  ctx.rotate(bAngle);
+
+  // Wings
+  const wingFlap = Math.sin(b.wingT) * 0.4;
+  ctx.fillStyle = 'rgba(180, 210, 240, 0.12)';
+  for (const side of [-1, 1]) {
+    ctx.save();
+    ctx.rotate(side * (0.45 + wingFlap));
+    ctx.beginPath();
+    ctx.ellipse(-4, side * 8, 30, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Body
+  ctx.fillStyle = rgb(COL.beeGlow, 0.85);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 30, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Stripes
+  ctx.fillStyle = 'rgba(30, 20, 0, 0.5)';
+  ctx.fillRect(-8, -16, 8, 32);
+  ctx.fillRect(8, -16, 8, 32);
+
+  // Head
+  ctx.fillStyle = 'rgba(55, 40, 15, 0.85)';
+  ctx.beginPath();
+  ctx.arc(26, 0, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = 'rgba(20, 15, 5, 0.9)';
+  ctx.beginPath(); ctx.arc(30, -5, 3.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(30, 5, 3.5, 0, Math.PI * 2); ctx.fill();
+
+  // ── Body hairs — the key feature ──
+  // Hairs sprout from the body and bend toward the field source.
+  // Deflection is proportional to field strength.
+  const hairCount = 28;
+  const fieldAngleLocal = fAngle - bAngle; // field direction in bee-local coords
+
+  for (let i = 0; i < hairCount; i++) {
+    const baseAngle = (i / hairCount) * Math.PI * 2;
+    // Hairs on body perimeter
+    const bx = Math.cos(baseAngle) * (baseAngle > -Math.PI/2 && baseAngle < Math.PI/2 ? 28 : 24);
+    const by = Math.sin(baseAngle) * 15;
+
+    // Hair resting direction = outward from body
+    const restAngle = baseAngle;
+    // Deflection toward the field
+    let deflection = 0;
+    if (fMag > 0.01) {
+      // How much this hair aligns with field direction
+      const alignment = Math.cos(fieldAngleLocal - baseAngle);
+      deflection = fMag * alignment * 0.9;
+    }
+
+    const hairAngle = restAngle + deflection;
+    const hairLen = 10 + Math.sin(i * 7.3 + t * 0.5) * 2;
+    const tipX = bx + Math.cos(hairAngle) * hairLen;
+    const tipY = by + Math.sin(hairAngle) * hairLen;
+
+    // Hair color intensifies with deflection
+    const hairAlpha = 0.25 + Math.abs(deflection) * 0.8;
+    const hairCol = Math.abs(deflection) > 0.15
+      ? lerp3([200, 200, 180], COL.charged, Math.min(Math.abs(deflection) * 2, 1))
+      : [200, 200, 180];
+
+    ctx.strokeStyle = rgb(hairCol, hairAlpha);
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    // Slight curve for organic feel
+    const midX = bx + Math.cos(hairAngle) * hairLen * 0.5 + Math.cos(restAngle) * 2;
+    const midY = by + Math.sin(hairAngle) * hairLen * 0.5 + Math.sin(restAngle) * 2;
+    ctx.quadraticCurveTo(midX, midY, tipX, tipY);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  // Label
+  ctx.fillStyle = rgb([200, 220, 210], 0.6);
+  ctx.font = '9px "Segoe UI", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('mechanosensory hairs', lx, ly + LENS_R - 8);
+
+  // Field strength indicator
+  if (fMag > 0.02) {
+    ctx.fillStyle = rgb(COL.charged, 0.5 + fMag * 0.4);
+    ctx.fillText('field: ' + (fMag * 100).toFixed(0) + '%', lx, ly - LENS_R + 14);
+  }
+
+  ctx.restore();
+
+  // Lens border
+  ctx.beginPath();
+  ctx.arc(lx, ly, LENS_R, 0, Math.PI * 2);
+  ctx.strokeStyle = rgba_ring(fMag);
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Connecting line from lens to tracked bee
+  ctx.save();
+  ctx.setLineDash([3, 5]);
+  ctx.strokeStyle = 'rgba(180, 200, 190, 0.15)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(lx + LENS_R * 0.7, ly - LENS_R * 0.7);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function rgba_ring(fMag) {
+  const col = lerp3([80, 100, 90], COL.charged, fMag);
+  return rgb(col, 0.25 + fMag * 0.3);
+}
+
 // ── Init ──
 
 resize();
@@ -601,6 +779,9 @@ function frame() {
 
   // Labels
   drawLabels(now);
+
+  // Magnified bee view
+  drawMagnifiedBee(bees[0], now);
 
   requestAnimationFrame(frame);
 }
