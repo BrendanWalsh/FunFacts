@@ -780,7 +780,6 @@ addEventListener('resize', () => { resize(); initMotes(); initBees(); });
 // ── Main loop ──
 
 let prevTime = performance.now() / 1000;
-let trackedBee = null;
 
 function frame() {
   const now = performance.now() / 1000;
@@ -805,16 +804,7 @@ function frame() {
   // Labels
   drawLabels(now);
 
-  // Magnified bee view — track bee with strongest field sense
-  let tracked = trackedBee || bees[0];
-  let maxSense = 0;
-  for (const b of bees) { if (b.sense > maxSense) { maxSense = b.sense; } }
-  // Switch only when another bee senses much more than current
-  if (tracked.sense < 0.01 && maxSense > 0.04) {
-    for (const b of bees) { if (b.sense === maxSense) { tracked = b; break; } }
-  }
-  trackedBee = tracked;
-  drawMagnifiedBee(tracked, now);
+  drawMagnifiedBee(bees[0], now);
 
   requestAnimationFrame(frame);
 }
