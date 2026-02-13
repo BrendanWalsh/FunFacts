@@ -573,7 +573,7 @@ updateBee = function(b, dt, t) {
 // bending in response to the local electric field.
 
 const LENS_R = 110;
-const LENS_MARGIN = 20;
+const LENS_MARGIN = 32;
 
 function drawMagnifiedBee(b, t) {
   const lx = LENS_MARGIN + LENS_R;
@@ -738,24 +738,23 @@ function drawMagnifiedBee(b, t) {
   }
 
   ctx.restore(); // undo translate+rotate
+  ctx.restore(); // undo clip
 
-  // Labels (inside clip, positioned carefully)
+  // Labels (outside clip so they don't get cut)
   ctx.textAlign = 'center';
   ctx.font = '10px "Segoe UI", system-ui, sans-serif';
-  ctx.fillStyle = rgb([190, 210, 200], 0.55);
-  ctx.fillText('mechanosensory hairs', lx, ly + LENS_R - 12);
+  ctx.fillStyle = rgb([190, 210, 200], 0.5);
+  ctx.fillText('mechanosensory hairs', lx, ly + LENS_R + 16);
 
   if (fMag > 0.02) {
     const pct = (fMag * 100).toFixed(0);
     ctx.font = '600 10px "Segoe UI", system-ui, sans-serif';
     ctx.fillStyle = rgb(COL.charged, 0.4 + fMag * 0.5);
-    ctx.fillText('field intensity: ' + pct + '%', lx, ly - LENS_R + 16);
+    ctx.fillText('field intensity: ' + pct + '%', lx, ly - LENS_R - 6);
   } else {
-    ctx.fillStyle = rgb([160, 180, 170], 0.3);
-    ctx.fillText('no field detected', lx, ly - LENS_R + 16);
+    ctx.fillStyle = rgb([160, 180, 170], 0.25);
+    ctx.fillText('no field detected', lx, ly - LENS_R - 6);
   }
-
-  ctx.restore(); // undo clip
 
   // Lens border — brightens with field
   ctx.beginPath();
