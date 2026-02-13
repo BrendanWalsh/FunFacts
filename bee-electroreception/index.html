@@ -6,7 +6,7 @@
 <title>How Bees Read Electricity</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #0e1610; display: flex; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(180deg, rgb(28,35,50) 0%, rgb(22,38,35) 60%, rgb(18,30,22) 100%); display: flex; }
   canvas { flex: 1; min-width: 0; height: 100%; }
   #panel {
     width: 300px; flex-shrink: 0; height: 100%;
@@ -116,12 +116,7 @@ const COL = {
 // ── Background ──
 
 function drawSky() {
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, rgb(COL.skyTop, 1));
-  g.addColorStop(0.6, rgb(COL.skyMid, 1));
-  g.addColorStop(1, rgb(COL.skyBot, 1));
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, W, H);
+  ctx.clearRect(0, 0, W, H);
 }
 
 // ── Flowers ──
