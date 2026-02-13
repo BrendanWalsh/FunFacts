@@ -159,23 +159,18 @@ function drawFlower(f, t) {
   const col = lerp3(COL.spent, COL.charged, fresh);
   const sway = Math.sin(t * 0.6 + f.swayOff) * 2;
 
-  // ── FIELD AURA — the primary visual element ──
-  // Large, visible, pulsing. This IS the flower's identity.
-  // Many color stops with slight noise to prevent 8-bit banding.
+  // ── FIELD AURA — drawn as layered concentric discs ──
+  // Avoids canvas radialGradient 8-bit banding entirely.
   const aR = f.r * (3 + fresh * 3);
-  const g = ctx.createRadialGradient(f.x, f.y, f.r * 0.2, f.x, f.y, aR);
-  const auraAlpha = 0.08 + fresh * 0.18;
-  const steps = 16;
-  for (let s = 0; s <= steps; s++) {
-    const p = s / steps;
-    const baseA = auraAlpha * Math.pow(1 - p, 1.8);
-    const jitter = (Math.sin(s * 73.7 + f.ringOff * 11.3) * 0.5 + 0.5) * 0.012;
-    g.addColorStop(Math.min(p, 1), rgb(col, Math.max(baseA + jitter, 0)));
+  const auraAlpha = 0.008 + fresh * 0.018;
+  const layers = 20;
+  for (let i = layers; i >= 0; i--) {
+    const r = f.r * 0.2 + (aR - f.r * 0.2) * (i / layers);
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = rgb(col, auraAlpha);
+    ctx.fill();
   }
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(f.x, f.y, aR, 0, Math.PI * 2);
-  ctx.fill();
 
   // ── CHARGE RINGS — sonar-like pulses showing field activity ──
   // Bright enough to actually see. This is the key differentiator.
