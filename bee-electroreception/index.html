@@ -6,11 +6,11 @@
 <title>How Bees Read Electricity</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(180deg, rgb(28,35,50) 0%, rgb(22,38,35) 60%, rgb(18,30,22) 100%); display: flex; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(180deg, rgb(38,48,68) 0%, rgb(30,52,48) 60%, rgb(24,42,32) 100%); display: flex; }
   canvas { flex: 1; min-width: 0; height: 100%; }
   #panel {
     width: 300px; flex-shrink: 0; height: 100%;
-    background: #0e1610; border-left: 1px solid rgba(100, 160, 130, .1);
+    background: #1a2a20; border-left: 1px solid rgba(100, 160, 130, .1);
     padding: 28px 24px 24px; overflow-y: auto;
     color: rgba(190, 210, 195, .8); font: 12.5px/1.65 'Segoe UI', system-ui, sans-serif;
   }
@@ -602,39 +602,7 @@ function frame() {
   // Labels
   drawLabels(now);
 
-  // Film grain — breaks up 8-bit color banding in dark tones
-  applyGrain();
-
   requestAnimationFrame(frame);
-}
-
-// Grain: a small tiling noise texture stamped each frame with random offset
-let grainCanvas, grainCtx;
-function initGrain() {
-  grainCanvas = document.createElement('canvas');
-  grainCanvas.width = 128; grainCanvas.height = 128;
-  grainCtx = grainCanvas.getContext('2d');
-  const id = grainCtx.createImageData(128, 128);
-  const d = id.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const v = Math.random() * 255 | 0;
-    d[i] = d[i+1] = d[i+2] = v;
-    d[i+3] = 12;  // ~5% opacity noise
-  }
-  grainCtx.putImageData(id, 0, 0);
-}
-initGrain();
-
-function applyGrain() {
-  ctx.save();
-  ctx.globalCompositeOperation = 'overlay';
-  const ox = (Math.random() * 128) | 0;
-  const oy = (Math.random() * 128) | 0;
-  const pat = ctx.createPattern(grainCanvas, 'repeat');
-  ctx.translate(ox, oy);
-  ctx.fillStyle = pat;
-  ctx.fillRect(-ox, -oy, W, H);
-  ctx.restore();
 }
 
 requestAnimationFrame(frame);
