@@ -34,6 +34,15 @@
   #panel .key .swatch {
     width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
   }
+  @media (max-width: 700px) {
+    html, body { flex-direction: column; overflow: auto; }
+    canvas { width: 100%; height: 65vh; flex: none; }
+    #panel {
+      width: 100%; height: auto; flex-shrink: 0;
+      border-left: none; border-top: 1px solid rgba(100, 160, 130, .1);
+      padding: 20px 20px 32px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -128,8 +137,10 @@ let flowers = [];
 
 function placeFlowers() {
   flowers = [];
-  const count = Math.max(10, Math.round(W * H / 100000));
-  const minGap = 120, margin = 80;
+  const minDim = Math.min(W, H);
+  const count = Math.max(6, Math.round(W * H / 100000));
+  const minGap = minDim < 400 ? 70 : 120;
+  const margin = minDim < 400 ? 40 : 80;
   for (let a = 0; a < 600 && flowers.length < count; a++) {
     const x = margin + Math.random() * (W - margin*2);
     const y = margin * 0.8 + Math.random() * (H - margin * 1.6);
@@ -609,12 +620,17 @@ updateBee = function(b, dt, t) {
 // A circular inset that tracks one bee and shows detailed body hairs
 // bending in response to the local electric field.
 
-const LENS_R = 110;
-const LENS_MARGIN = 32;
+const LENS_R_BASE = 110;
+const LENS_MARGIN_BASE = 32;
+
+function lensR() { return Math.min(LENS_R_BASE, Math.min(W, H) * 0.18); }
+function lensMargin() { return Math.min(LENS_MARGIN_BASE, 16); }
 
 function drawMagnifiedBee(b, t) {
-  const lx = LENS_MARGIN + LENS_R;
-  const ly = H - LENS_MARGIN - LENS_R;
+  const lr = lensR();
+  const lm = lensMargin();
+  const lx = lm + lr;
+  const ly = H - lm - lr;
 
   // Find field direction from nearest charged flower
   let fx = 0, fy = 0, fieldStrength = 0;
@@ -637,7 +653,7 @@ function drawMagnifiedBee(b, t) {
   ctx.strokeStyle = 'rgba(180, 210, 200, 0.12)';
   ctx.lineWidth = 0.8;
   ctx.beginPath();
-  ctx.moveTo(lx + LENS_R * 0.65, ly - LENS_R * 0.65);
+  ctx.moveTo(lx + lr * 0.65, ly - lr * 0.65);
   ctx.lineTo(b.x, b.y);
   ctx.stroke();
   ctx.setLineDash([]);
@@ -647,13 +663,13 @@ function drawMagnifiedBee(b, t) {
 
   // Clip to circle
   ctx.beginPath();
-  ctx.arc(lx, ly, LENS_R, 0, Math.PI * 2);
+  ctx.arc(lx, ly, lr, 0, Math.PI * 2);
   ctx.clip();
 
   // Background
   const bgCol = lerp3([14, 20, 18], COL.charged, fMag * 0.08);
   ctx.fillStyle = rgb(bgCol, 1);
-  ctx.fillRect(lx - LENS_R, ly - LENS_R, LENS_R * 2, LENS_R * 2);
+  ctx.fillRect(lx - lr, ly - lr, lr * 2, lr * 2);
 
   // Field gradient lines
   if (fMag > 0.02) {
@@ -664,8 +680,8 @@ function drawMagnifiedBee(b, t) {
       const oy = Math.sin(fAngle + Math.PI/2) * i * 14;
       ctx.strokeStyle = rgb(COL.charged, lineAlpha * (1 - Math.abs(i)/10));
       ctx.beginPath();
-      ctx.moveTo(lx + ox - Math.cos(fAngle) * LENS_R, ly + oy - Math.sin(fAngle) * LENS_R);
-      ctx.lineTo(lx + ox + Math.cos(fAngle) * LENS_R, ly + oy + Math.sin(fAngle) * LENS_R);
+      ctx.moveTo(lx + ox - Math.cos(fAngle) * lr, ly + oy - Math.sin(fAngle) * lr);
+      ctx.lineTo(lx + ox + Math.cos(fAngle) * lr, ly + oy + Math.sin(fAngle) * lr);
       ctx.stroke();
     }
   }
@@ -676,6 +692,9 @@ function drawMagnifiedBee(b, t) {
   const bAngle = Math.atan2(b.vy, b.vx);
   ctx.rotate(bAngle);
 
+  // Scale internal bee drawing to lens size
+  const sc = lr / LENS_R_BASE;
+
   // Wings
   const wingFlap = Math.sin(b.wingT) * 0.35;
   ctx.fillStyle = 'rgba(180, 210, 240, 0.1)';
@@ -683,7 +702,7 @@ function drawMagnifiedBee(b, t) {
     ctx.save();
     ctx.rotate(side * (0.4 + wingFlap));
     ctx.beginPath();
-    ctx.ellipse(-5, side * 10, 38, 14, 0, 0, Math.PI * 2);
+    ctx.ellipse(-5*sc, side*10*sc, 38*sc, 14*sc, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -691,32 +710,32 @@ function drawMagnifiedBee(b, t) {
   // Body
   ctx.fillStyle = rgb(COL.beeGlow, 0.85);
   ctx.beginPath();
-  ctx.ellipse(0, 0, 36, 20, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, 36*sc, 20*sc, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // Stripes
   ctx.fillStyle = 'rgba(30, 20, 0, 0.5)';
-  ctx.fillRect(-10, -20, 9, 40);
-  ctx.fillRect(9, -20, 9, 40);
+  ctx.fillRect(-10*sc, -20*sc, 9*sc, 40*sc);
+  ctx.fillRect(9*sc, -20*sc, 9*sc, 40*sc);
 
   // Head
   ctx.fillStyle = 'rgba(55, 40, 15, 0.85)';
   ctx.beginPath();
-  ctx.arc(32, 0, 12, 0, Math.PI * 2);
+  ctx.arc(32*sc, 0, 12*sc, 0, Math.PI * 2);
   ctx.fill();
 
   // Eyes
   ctx.fillStyle = 'rgba(20, 15, 5, 0.9)';
-  ctx.beginPath(); ctx.arc(37, -6, 4, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(37, 6, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(37*sc, -6*sc, 4*sc, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(37*sc, 6*sc, 4*sc, 0, Math.PI * 2); ctx.fill();
 
   // Antennae
   ctx.strokeStyle = 'rgba(80, 60, 20, 0.6)';
   ctx.lineWidth = 1;
   for (const side of [-1, 1]) {
     ctx.beginPath();
-    ctx.moveTo(40, side * 4);
-    ctx.quadraticCurveTo(52, side * 8, 54, side * 16);
+    ctx.moveTo(40*sc, side*4*sc);
+    ctx.quadraticCurveTo(52*sc, side*8*sc, 54*sc, side*16*sc);
     ctx.stroke();
   }
 
@@ -728,8 +747,8 @@ function drawMagnifiedBee(b, t) {
     const baseAngle = (i / hairCount) * Math.PI * 2;
 
     // Position on body ellipse perimeter
-    const ex = Math.cos(baseAngle) * 34;
-    const ey = Math.sin(baseAngle) * 19;
+    const ex = Math.cos(baseAngle) * 34 * sc;
+    const ey = Math.sin(baseAngle) * 19 * sc;
 
     // Hair resting direction = outward from body center
     const restAngle = Math.atan2(ey, ex);
@@ -742,7 +761,7 @@ function drawMagnifiedBee(b, t) {
     }
 
     const hairAngle = restAngle + deflection;
-    const hairLen = 18 + Math.sin(i * 5.7 + t * 0.8) * 2;
+    const hairLen = (18 + Math.sin(i * 5.7 + t * 0.8) * 2) * sc;
 
     // Control point for curve: base bends first, tip follows
     const ctrlAngle = restAngle + deflection * 1.6;
@@ -781,21 +800,21 @@ function drawMagnifiedBee(b, t) {
   ctx.textAlign = 'center';
   ctx.font = '10px "Segoe UI", system-ui, sans-serif';
   ctx.fillStyle = rgb([190, 210, 200], 0.5);
-  ctx.fillText('mechanosensory hairs', lx, ly + LENS_R + 16);
+  ctx.fillText('mechanosensory hairs', lx, ly + lr + 16);
 
   if (fMag > 0.02) {
     const pct = (fMag * 100).toFixed(0);
     ctx.font = '600 10px "Segoe UI", system-ui, sans-serif';
     ctx.fillStyle = rgb(COL.charged, 0.4 + fMag * 0.5);
-    ctx.fillText('field intensity: ' + pct + '%', lx, ly - LENS_R - 6);
+    ctx.fillText('field intensity: ' + pct + '%', lx, ly - lr - 6);
   } else {
     ctx.fillStyle = rgb([160, 180, 170], 0.25);
-    ctx.fillText('no field detected', lx, ly - LENS_R - 6);
+    ctx.fillText('no field detected', lx, ly - lr - 6);
   }
 
   // Lens border — brightens with field
   ctx.beginPath();
-  ctx.arc(lx, ly, LENS_R, 0, Math.PI * 2);
+  ctx.arc(lx, ly, lr, 0, Math.PI * 2);
   const borderCol = lerp3([60, 80, 70], COL.charged, fMag);
   ctx.strokeStyle = rgb(borderCol, 0.2 + fMag * 0.35);
   ctx.lineWidth = 1.5;
